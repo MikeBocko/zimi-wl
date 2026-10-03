@@ -18,6 +18,7 @@ jobs:
         uses: google-github-actions/run-gemini-cli@v0
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          gemini_cli_args: "--skip-trust"
           prompt: |
             Create a file named hello.txt in the repository.
             Put exactly this text in it:
