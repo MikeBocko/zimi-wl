@@ -16,12 +16,13 @@ jobs:
 
       - name: Run Gemini
         uses: google-github-actions/run-gemini-cli@v0
+        env:
+          GEMINI_CLI_TRUST_WORKSPACE: "true"
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
-          gemini_cli_args: "--skip-trust"
           prompt: |
-            Create a file named hello.txt in the repository.
-            Put exactly this text in it:
+            Create a file named hello.txt in the repo.
+            Add this text:
 
             GEMINI_AGENT_SUCCESS
 
