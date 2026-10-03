@@ -1,0 +1,72 @@
+name: Zimi-WL Agent
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: zimi-wl-agent
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  agent:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Gemini CLI
+        run: |
+          npm install --silent --no-audit --prefer-offline --global @google/gemini-cli
+
+      - name: Run Gemini
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_CLI_TRUST_WORKSPACE: "true"
+        run: |
+          set +e
+
+          BACKOFF=60
+
+          while true; do
+            echo "Starting Gemini..."
+
+            gemini \
+              --yolo \
+              --prompt "Read AGENTS.md and SPEC.md. Continue the next unfinished task. Test your changes and fix failures. Do not stop until the current task is complete."
+
+            EXIT_CODE=$?
+
+            if [ "$EXIT_CODE" -eq 0 ]; then
+              echo "Gemini completed successfully."
+              break
+            fi
+
+            echo "Gemini exited with code $EXIT_CODE."
+            echo "Retrying in $BACKOFF seconds..."
+
+            sleep "$BACKOFF"
+
+            BACKOFF=$((BACKOFF * 2))
+
+            if [ "$BACKOFF" -gt 1800 ]; then
+              BACKOFF=1800
+            fi
+          done
+
+      - name: Push changes
+        run: |
+          git config user.name "zimi-agent"
+          git config user.email "zimi-agent@users.noreply.github.com"
+
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Continue Zimi-WL development"
+            git push
+          fi
