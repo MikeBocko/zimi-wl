@@ -29,8 +29,6 @@ jobs:
         run: |
           set +e
 
-          BACKOFF=60
-
           while true; do
             echo "Starting Gemini..."
 
@@ -40,33 +38,25 @@ jobs:
 
             EXIT_CODE=$?
 
-            if [ "$EXIT_CODE" -eq 0 ]; then
-              echo "Gemini completed successfully."
-              break
+            echo "Gemini exited with code $EXIT_CODE."
+
+            git config user.name "zimi-agent"
+            git config user.email "zimi-agent@users.noreply.github.com"
+
+            git add -A
+
+            if git diff --cached --quiet; then
+              echo "No changes to commit."
+            else
+              git commit -m "Continue Zimi-WL development"
+              git push
             fi
 
-            echo "Gemini exited with code $EXIT_CODE."
-            echo "Retrying in $BACKOFF seconds..."
-
-            sleep "$BACKOFF"
-
-            BACKOFF=$((BACKOFF * 2))
-
-            if [ "$BACKOFF" -gt 1800 ]; then
-              BACKOFF=1800
+            if [ "$EXIT_CODE" -eq 0 ]; then
+              echo "Gemini completed. Starting next task..."
+            else
+              echo "Gemini failed or hit a quota/error."
+              echo "Retrying in 30 minutes..."
+              sleep 1800
             fi
           done
-
-      - name: Push changes
-        run: |
-          git config user.name "zimi-agent"
-          git config user.email "zimi-agent@users.noreply.github.com"
-
-          git add -A
-
-          if git diff --cached --quiet; then
-            echo "No changes to commit."
-          else
-            git commit -m "Continue Zimi-WL development"
-            git push
-          fi
