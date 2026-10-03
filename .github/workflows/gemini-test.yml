@@ -1,0 +1,35 @@
+name: Gemini Test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Gemini
+        uses: google-github-actions/run-gemini-cli@v0
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          prompt: |
+            Create a file named hello.txt in the repository.
+            Put exactly this text in it:
+
+            GEMINI_AGENT_SUCCESS
+
+            Do not modify or create any other files.
+
+      - name: Commit and push
+        run: |
+          git config user.name "zimi-agent"
+          git config user.email "zimi-agent@users.noreply.github.com"
+          git add hello.txt
+          git commit -m "Test Gemini agent"
+          git push
